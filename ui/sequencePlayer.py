@@ -1,4 +1,6 @@
 import os
+from time import sleep
+
 import cv2
 import re
 import numpy as np
@@ -21,7 +23,11 @@ class SequencePlayer:
         if len(image0.shape) == 3:
             self.squash = True
 
-        print(f"match: {self.match}, squash: {self.squash}")
+        # check if alpha channel is present
+        if len(image0.shape) == 3 and image0.shape[2] == 4:
+            self.alpha = True
+
+        print(f"match: {self.match}, squash: {self.squash}, alpha: {image0.shape}")
 
     def __files__(self):
         files = os.listdir(self.path)
@@ -34,15 +40,18 @@ class SequencePlayer:
         files = list(map(lambda file: f"{self.path}/{file}", files))
         return files
 
+    def __play_single__(self, file):
+        image = cv2.imread(file)
+        if not self.match:
+            image = cv2.resize(image, self.dim)
+        if self.squash:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        display(image.tolist())
+
     def play(self):
-        for file in self.files:
-            image = cv2.imread(file)
-            if not self.match:
-                image = cv2.resize(image, self.dim)
-            if self.squash:
-                image = np.mean(image, axis=2, dtype=np.uint8)
-            display(image.tolist())
         print(f"Playing {self.path}")
+        for file in self.files:
+            self.__play_single__(file)
 
 
 if __name__ == "__main__":
