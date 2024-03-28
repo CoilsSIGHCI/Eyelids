@@ -1,42 +1,65 @@
 import io
-import json
-import os
+import time
+import threading
 
 import cv2
 import numpy as np
 import torch
-import time
-
+import torch.nn.functional as F
 from picamera2 import Picamera2
 from picamera2.encoders import H264Encoder
 from picamera2.outputs import FileOutput
 from torch.autograd import Variable
-import torch.nn.functional as F
+from realtime.model import generate_model
 
 from hw import is_raspberry_pi
 
-MODEL_PATH = './trained_models/Pretrained models/egogesture_resnetl_10_RGB_8.pth'
-class Model:
-    def __init__(self):
-        self.model = torch.load(MODEL_PATH)
-        self.recordingBuffer = io.BytesIO()
-        self.recordingBufferFileIO = FileOutput(self.recordingBuffer)
+RECORDING_BUFFER_PATH = "/tmp/recording.h264"
 
-    def test(self, opt, class_names):
+MODEL_PATH = 'realtime/trained_models/Pretrained models/egogesture_resnetl_10_RGB_8.pth'
+MODEL_TYPE = 'resnetl'
+
+
+class GestureService:
+    def __init__(self, opt):
+        self.opt = opt
+        self.model = generate_model(opt)
+        # self.recordingBuffer = io.BytesIO()
+        self.recordingBufferFileIO = FileOutput(RECORDING_BUFFER_PATH)
+        self.stop_semaphore = threading.Event()
+        self.camera = None
+
+    def __start_recording__(self):
+        self.camera = Picamera2()
+        video_configuration = self.camera.create_video_configuration()
+        self.camera.configure(video_configuration)
+        encoder = H264Encoder(bitrate=30000)
+        self.camera.start_recording(encoder, self.recordingBufferFileIO)
+
+    # Non-blocking method in a separate thread
+    def start_recording(self):
+        def wrapper():
+            self.__start_recording__()
+            self.stop_semaphore.clear()
+            while not self.stop_semaphore.is_set():
+                time.sleep(1)
+            self.camera.stop_recording()
+
+        threading.Thread(target=wrapper).start()
+
+        return self.stop_semaphore.set
+
+    def test(self):
         print('predict')
 
-        self.model.eval()
+        # self.model.eval()
 
-        with Picamera2() as camera:
-            video_configuration = camera.create_video_configuration()
-            camera.configure(video_configuration)
-            encoder = H264Encoder(bitrate=3000)
-            camera.start_recording(encoder, self.recordingBufferFileIO)
-            time.sleep(opt.record_time)  # record for a certain duration
-            camera.stop_recording()
+        stop_recording = self.start_recording()
+        time.sleep(5)
+        stop_recording()
 
-        # Load the recorded video and process it frame by frame
-        video = cv2.VideoCapture(self.recordingBufferFileIO)
+        video = cv2.VideoCapture(RECORDING_BUFFER_PATH)
+        # video = cv2.VideoCapture(self.recordingBufferFileIO)
         while video.isOpened():
             ret, frame = video.read()
             if not ret:
@@ -46,18 +69,14 @@ class Model:
             with torch.no_grad():
                 inputs = Variable(inputs)
                 outputs = self.model(inputs)
-            if not opt.no_softmax_in_test:
+            if not self.opt.no_softmax_in_test:
                 outputs = F.softmax(outputs, dim=1)
 
             print(f"Current output: {outputs}")
 
         video.release()
 
-    def predict(self, inputs):
-        return self.model(inputs)
-
     def predict_with_camera(self):
-        from picamera2 import Picamera2
         assert is_raspberry_pi(), "This method is only available on Raspberry Pi"
 
         # return self.model(inputs)
