@@ -126,7 +126,7 @@ class AnimationControl(Characteristic):
             return
         if decoded_value == self.State.off.value:
             logger.debug("There should be a interrupt function here, but it is not implemented yet.")
-        elif decoded_value == self.State.strobe.value:
+        else:
             self.value = decoded_value
             logger.debug(f"Playing {decoded_value} animation")
             path = self.animation_paths[decoded_value]
