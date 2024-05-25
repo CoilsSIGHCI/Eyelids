@@ -4,7 +4,14 @@ from time import sleep
 import cv2
 import re
 import numpy as np
+
+from connector.utils import StrobeState
 from display.Transmit import display
+
+animation_paths = {
+    StrobeState.strobe.value: os.path.expanduser("~/EyelidsSequences/Strobe"),
+    StrobeState.slideRight.value: os.path.expanduser("~/EyelidsSequences/HMove"),
+}
 
 class SequencePlayer:
     def __init__(self, path, dim=(64, 128)):

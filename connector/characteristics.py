@@ -1,8 +1,9 @@
 import array
 import json
 import os
-from enum import Enum
 
+import globalState
+from connector.utils import StrobeState
 import dbus
 import dbus.service
 
@@ -84,56 +85,46 @@ class Characteristic(dbus.service.Object):
 
 
 class AnimationControl(Characteristic):
-    uuid = "4116f8d2-9f66-4f58-a53d-fc7440e7c14e"
+    uuid = "4116F8D2-9F66-4F58-A53D-FC7440E7C14E"
     description = b"Get\x14set\x14animation\x14playing\x14on\x14screen"
 
-
-    class State(Enum):
-        strobe = "STROBE"
-        off = "OFF"
-        slideRight = "SLIDE_RIGHT"
-
-        @classmethod
-        def has_value(cls, value):
-            return value in cls._value2member_map_
-
-
-    animation_paths = {
-        State.strobe.value: os.path.expanduser("~/EyelidsSequences/Strobe"),
-        State.slideRight.value: os.path.expanduser("~/EyelidsSequences/HMove"),
-    }
 
     def __init__(self, bus, index, service):
         Characteristic.__init__(
             self, bus, index, self.uuid, ["encrypt-read", "encrypt-write"], service,
         )
 
-        self.value = self.State.off
+        if globalState.get_patterns() is None:
+            logger.warning("Patterns not initialized when creating AnimationControl")
         self.add_descriptor(CharacteristicUserDescriptionDescriptor(bus, 1, self))
 
     def ReadValue(self, options):
-        logger.debug("Animation Read: " + repr(self.value))
+        printing_pattern = StrobeState.off
+        if globalState.get_patterns() is not None:
+            if len(globalState.get_patterns()) > 0:
+                printing_pattern = globalState.get_patterns()[0]
+        logger.debug("Animation Read: " + repr(printing_pattern))
 
-        return self.value.value.encode("utf-8")
+        return printing_pattern.value.encode("utf-8")
 
     def WriteValue(self, value, options):
         decoded_value = bytearray(value).decode("utf-8")
         logger.debug("Animation Write(raw): " + repr(value))
         logger.debug("Animation Write: " + decoded_value)
 
-        if not self.State.has_value(decoded_value):
+        if not self.StrobeState.has_value(decoded_value):
             logger.error("Invalid value: " + repr(value))
             return
-        if decoded_value == self.State.off.value:
+        if decoded_value == StrobeState.off.value:
             logger.debug("There should be a interrupt function here, but it is not implemented yet.")
         else:
-            self.value = decoded_value
+            globalState.set_patterns(globalState.get_patterns() + [decoded_value])
             logger.debug(f"Playing {decoded_value} animation")
-            path = self.animation_paths[decoded_value]
-            SequencePlayer(path).play()
+            # path = self.animation_paths[decoded_value]
+            # SequencePlayer(path).play()
 
         logger.debug("Animation ended ")
-        self.value = self.State.off
+        self.value = self.StrobeState.off
 
 
 class GestureControlCharacteristic(Characteristic):
@@ -145,18 +136,20 @@ class GestureControlCharacteristic(Characteristic):
             self, bus, index, self.uuid, ["encrypt-read"], service,
         )
 
-        self.value = {"x": 0, "y": 0, "gesture": "UNKNOWN"}
+        if globalState.get_gestures() is None:
+            logger.warning("Gestures not initialized when creating GestureControlCharacteristic")
+
         self.add_descriptor(CharacteristicUserDescriptionDescriptor(bus, 1, self))
 
     def ReadValue(self, options):
-        logger.info("boiler read: " + repr(self.value))
-        encoded = json.encoder.JSONEncoder().encode(self.value)
+        logger.info("boiler read: " + repr(globalState.get_gestures()))
+        encoded = json.encoder.JSONEncoder().encode(globalState.get_gestures())
         return bytes(encoded, "utf-8")
 
 
 class AutoOffCharacteristic(Characteristic):
-    uuid = "9c7dbce8-de5f-4168-89dd-74f04f4e5842"
-    description = b"Get/set autoff time in minutes"
+    uuid = "9C7DBCE8-DE5F-4168-89DD-74F04F4E5842"
+    description = b"Get set auto-off time in minutes"
 
     def __init__(self, bus, index, service):
         Characteristic.__init__(

@@ -2,6 +2,10 @@ def testGATT():
     from .GATTService import test
     test()
 
+def start():
+    from .GATTService import main
+    main()
+
 
 BLEServiceBaseUrl = "EyelidsConnector"
 BLUEZ_SERVICE_NAME = "org.bluez"
