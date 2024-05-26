@@ -1,5 +1,4 @@
 from display.Transmit import display
-from spatial import get_gesture_direction
 
 
 def displayGesture(gesture, radius=16, duration=128):
