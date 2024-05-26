@@ -11,6 +11,7 @@ from display.Transmit import display
 animation_paths = {
     StrobeState.strobe.value: os.path.expanduser("~/EyelidsSequences/Strobe"),
     StrobeState.slideRight.value: os.path.expanduser("~/EyelidsSequences/HMove"),
+    StrobeState.slideLeft.value: os.path.expanduser("~/EyelidsSequences/HMove-R"),
 }
 
 class SequencePlayer:
