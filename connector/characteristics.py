@@ -86,8 +86,7 @@ class Characteristic(dbus.service.Object):
 
 class AnimationControl(Characteristic):
     uuid = "4116F8D2-9F66-4F58-A53D-FC7440E7C14E"
-    description = b"Get\x14set\x14animation\x14playing\x14on\x14screen"
-
+    description = b"GET SET ANIMATION PLAYING ON SCREEN"
 
     def __init__(self, bus, index, service):
         Characteristic.__init__(
@@ -103,7 +102,6 @@ class AnimationControl(Characteristic):
         if globalState.get_patterns() is not None:
             if len(globalState.get_patterns()) > 0:
                 printing_pattern = globalState.get_patterns()[0]
-        logger.debug("Animation Read: " + repr(printing_pattern))
 
         return printing_pattern.value.encode("utf-8")
 
@@ -112,24 +110,15 @@ class AnimationControl(Characteristic):
         logger.debug("Animation Write(raw): " + repr(value))
         logger.debug("Animation Write: " + decoded_value)
 
-        if not self.StrobeState.has_value(decoded_value):
-            logger.error("Invalid value: " + repr(value))
-            return
-        if decoded_value == StrobeState.off.value:
-            logger.debug("There should be a interrupt function here, but it is not implemented yet.")
-        else:
-            globalState.set_patterns(globalState.get_patterns() + [decoded_value])
-            logger.debug(f"Playing {decoded_value} animation")
-            # path = self.animation_paths[decoded_value]
-            # SequencePlayer(path).play()
-
-        logger.debug("Animation ended ")
-        self.value = self.StrobeState.off
+        logger.debug(f"Playing {decoded_value} animation")
+        globalState.set_patterns(globalState.get_patterns() + [decoded_value])
+        # path = self.animation_paths[decoded_value]
+        # SequencePlayer(path).play()
 
 
 class GestureControlCharacteristic(Characteristic):
     uuid = "49B0478D-C1B0-4255-BB55-1FD182638BBB"
-    description = b"Read-only\x14hand\x14gesture\x14control\x14status"
+    description = b"READ-ONLY HAND GESTURE CONTROL STATUS"
 
     def __init__(self, bus, index, service):
         Characteristic.__init__(
@@ -142,9 +131,9 @@ class GestureControlCharacteristic(Characteristic):
         self.add_descriptor(CharacteristicUserDescriptionDescriptor(bus, 1, self))
 
     def ReadValue(self, options):
-        logger.info("boiler read: " + repr(globalState.get_gestures()))
-        encoded = json.encoder.JSONEncoder().encode(globalState.get_gestures())
-        return bytes(encoded, "utf-8")
+        ges = globalState.get_gestures()
+        print(f"Gesture read: {ges[-1]}")
+        return bytes(str(ges[-1].__repr__()).replace("'", "\""), "utf-8")
 
 
 class AutoOffCharacteristic(Characteristic):
