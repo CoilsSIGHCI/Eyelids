@@ -9,9 +9,9 @@ from connector.utils import StrobeState
 from display.Transmit import display
 
 animation_paths = {
-    StrobeState.strobe.value: os.path.expanduser("~/EyelidsSequences/Strobe"),
-    StrobeState.slideRight.value: os.path.expanduser("~/EyelidsSequences/HMove"),
-    StrobeState.slideLeft.value: os.path.expanduser("~/EyelidsSequences/HMove-R"),
+    StrobeState.strobe.value: os.path.expanduser("~/Eyelids/seq/Strobe"),
+    StrobeState.slideRight.value: os.path.expanduser("~/Eyelids/seq/HMove-R"),
+    StrobeState.slideLeft.value: os.path.expanduser("~/Eyelids/seq/HMove"),
 }
 
 class SequencePlayer:

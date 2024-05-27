@@ -27,6 +27,7 @@ class StrobeState(Enum):
     off = "OFF"
     slideRight = "SLIDE_RIGHT"
     slideLeft = "SLIDE_LEFT"
+    glow = "GLOW"
 
     @classmethod
     def has_value(cls, value):

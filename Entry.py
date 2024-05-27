@@ -2,6 +2,7 @@ import os
 import threading
 import connector
 from connector.utils import StrobeState
+from display.Background import glowBackground
 from hw import is_raspberry_pi
 from ui.sequencePlayer import SequencePlayer, animation_paths
 from ui.gesturePlayer import displayGesture
@@ -35,8 +36,13 @@ class EyelidsDevice:
                     displayGesture(gesture)
                     globalState.set_gestures(globalState.get_gestures()[1:])
             elif len(globalState.get_patterns()) > 0:
-                pattern = globalState.get_patterns()[0]
-                SequencePlayer(animation_paths[pattern]).play()
+                # Generative patterns
+                if globalState.get_patterns()[0] == StrobeState.glow.value:
+                    glowBackground()
+                else:
+                    # Animation patterns
+                    pattern = globalState.get_patterns()[0]
+                    SequencePlayer(animation_paths[pattern]).play()
                 globalState.set_patterns(globalState.get_patterns()[1:])
             else:
                 displayIdle()

@@ -106,8 +106,8 @@ class AnimationControl(Characteristic):
         return printing_pattern.value.encode("utf-8")
 
     def WriteValue(self, value, options):
-        decoded_value = bytearray(value).decode("utf-8")
         logger.debug("Animation Write(raw): " + repr(value))
+        decoded_value = bytearray(value).decode("utf-8")
         logger.debug("Animation Write: " + decoded_value)
 
         logger.debug(f"Playing {decoded_value} animation")
