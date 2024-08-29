@@ -28,6 +28,15 @@ class StrobeState(Enum):
     slideRight = "SLIDE_RIGHT"
     slideLeft = "SLIDE_LEFT"
     glow = "GLOW"
+    navForward = "NAV_FORWARD"
+    navBackward = "NAV_BACKWARD"
+    navLeft = "NAV_LEFT"
+    navRight = "NAV_RIGHT"
+    navStop = "NAV_STOP"
+
+    @staticmethod
+    def isNavigable(value: Enum) -> bool:
+        return str(value.value).startswith("NAV_")
 
     @classmethod
     def has_value(cls, value):

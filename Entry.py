@@ -5,11 +5,33 @@ from connector.utils import StrobeState
 from display.Background import glowBackground
 from hw import is_raspberry_pi
 from ui.sequencePlayer import SequencePlayer, animation_paths
-from ui.gesturePlayer import displayGesture
+from ui.gesturePlayer import displayGesture, displayNavigation
 from ui.Idle import displayIdle
 from mvp.wrapper import start_realtime, start_gatt
 
 import globalState
+
+
+def loop():
+    while True:
+        if len(globalState.get_gestures()) > 0:
+            gesture = globalState.get_gestures()[0]
+            if gesture is not None and len(globalState.get_gestures()) > 0:
+                displayGesture(gesture)
+                globalState.set_gestures(globalState.get_gestures()[1:])
+        elif len(globalState.get_patterns()) > 0:
+            # Generative patterns
+            if StrobeState.isNavigable(globalState.get_patterns()[0]):
+                displayNavigation(globalState.get_patterns()[0])
+            elif globalState.get_patterns()[0] == StrobeState.glow.value:
+                glowBackground()
+            else:
+                # Animation patterns
+                pattern = globalState.get_patterns()[0]
+                SequencePlayer(animation_paths[pattern.value]).play()
+            globalState.set_patterns(globalState.get_patterns()[1:])
+        else:
+            displayIdle()
 
 
 class EyelidsDevice:
@@ -28,29 +50,10 @@ class EyelidsDevice:
     def startRealtime():
         start_realtime(EyelidsDevice.updateGesture, playback=False)
 
-    def loop(self):
-        while True:
-            if len(globalState.get_gestures()) > 0:
-                gesture = globalState.get_gestures()[0]
-                if gesture is not None and len(globalState.get_gestures()) > 0:
-                    displayGesture(gesture)
-                    globalState.set_gestures(globalState.get_gestures()[1:])
-            elif len(globalState.get_patterns()) > 0:
-                # Generative patterns
-                if globalState.get_patterns()[0] == StrobeState.glow.value:
-                    glowBackground()
-                else:
-                    # Animation patterns
-                    pattern = globalState.get_patterns()[0]
-                    SequencePlayer(animation_paths[pattern]).play()
-                globalState.set_patterns(globalState.get_patterns()[1:])
-            else:
-                displayIdle()
-
     def __init__(self):
         EyelidsDevice.startGATT()
         # EyelidsDevice.startRealtime()
-        self.loop()
+        loop()
 
 
 if __name__ == "__main__":

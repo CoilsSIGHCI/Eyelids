@@ -111,7 +111,7 @@ class AnimationControl(Characteristic):
         logger.debug("Animation Write: " + decoded_value)
 
         logger.debug(f"Playing {decoded_value} animation")
-        globalState.set_patterns(globalState.get_patterns() + [decoded_value])
+        globalState.set_patterns(globalState.get_patterns() + [StrobeState(decoded_value)])
         # path = self.animation_paths[decoded_value]
         # SequencePlayer(path).play()
 
