@@ -41,16 +41,44 @@ def displayGesture(gesture, shape='circle', radius=16, duration=128):
         display(image)
 
 
-def displayNavigation(command: StrobeState, duration=128):
-    directions = [StrobeState.navForward, StrobeState.navBackward, StrobeState.navLeft, StrobeState.navRight]
-    directionMap = {
-        StrobeState.navForward: "upward",
-        StrobeState.navBackward: "downward",
-        StrobeState.navLeft: "leftward",
-        StrobeState.navRight: "rightward",
-    }
+def displayNavigation(direction: StrobeState, duration=32):
+    width, height = 128, 64
+    empty_image = [[0 for _ in range(width)] for _ in range(height)]
 
-    if directions.__contains__(command):
-        displayGesture(directionMap[command], shape='circle', duration=duration)
-    else:
-        SequencePlayer(animation_paths["STROBE"]).play()
+    for frame in range(duration):
+        image = empty_image.copy()
+        progress = frame / duration
+
+        if direction in [StrobeState.navForward, StrobeState.navBackward]:
+            stride_width = 64
+            stride_height = 16
+            start_y = height if direction == StrobeState.navForward else 0
+            end_y = 0 if direction == StrobeState.navForward else height
+            current_y = int(start_y + (end_y - start_y) * progress)
+
+            for i in range(height):
+                for j in range(width):
+                    if abs(j - width // 2) < stride_width // 2 and abs(i - current_y) < stride_height // 2:
+                        image[height - 1 - i][width - 1 - j] = 255
+
+        elif direction in [StrobeState.navLeft, StrobeState.navRight]:
+            center_y = height // 2
+            start_x = width if direction == StrobeState.navLeft else 0
+            end_x = 0 if direction == StrobeState.navLeft else width
+            current_x = int(start_x + (end_x - start_x) * progress)
+            radius = 16
+
+            for i in range(height):
+                for j in range(width):
+                    if (i - center_y) ** 2 + (j - current_x) ** 2 <= radius ** 2:
+                        image[height - 1 - i][width - 1 - j] = 255
+
+        elif direction == StrobeState.navStop:
+            center_x, center_y = width // 2, height // 2
+            radius = int(min(width, height) * 0.4 * progress)
+            for i in range(height):
+                for j in range(width):
+                    if (i - center_y) ** 2 + (j - center_x) ** 2 <= radius ** 2:
+                        image[height - 1 - i][width - 1 - j] = 255
+
+        display(image)
