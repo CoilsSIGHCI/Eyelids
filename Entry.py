@@ -13,6 +13,8 @@ import globalState
 
 
 def loop():
+    idleFrame = 0
+    idleAnimationFrames = 64
     while True:
         if len(globalState.get_gestures()) > 0:
             gesture = globalState.get_gestures()[0]
@@ -31,7 +33,9 @@ def loop():
                 SequencePlayer(animation_paths[pattern.value]).play()
             globalState.set_patterns(globalState.get_patterns()[1:])
         else:
-            displayIdle()
+            idleFrame += 1
+            idleFrame = idleFrame % idleAnimationFrames
+            displayIdle(idleFrame, duration=idleAnimationFrames)
 
 
 class EyelidsDevice:
