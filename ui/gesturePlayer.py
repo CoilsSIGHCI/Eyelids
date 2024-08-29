@@ -49,16 +49,25 @@ def displayNavigation(direction: StrobeState, duration=32):
         image = empty_image.copy()
         progress = frame / duration
 
-        if direction in [StrobeState.navForward, StrobeState.navBackward]:
-            stride_width = 64
-            stride_height = 16
-            start_y = height if direction == StrobeState.navForward else 0
-            end_y = 0 if direction == StrobeState.navForward else height
-            current_y = int(start_y + (end_y - start_y) * progress)
+        # if direction in [StrobeState.navForward, StrobeState.navBackward]:
+        #     stride_width = 64
+        #     stride_height = 16
+        #     start_y = height if direction == StrobeState.navForward else 0
+        #     end_y = 0 if direction == StrobeState.navForward else height
+        #     current_y = int(start_y + (end_y - start_y) * progress)
+        #
+        #     for i in range(height):
+        #         for j in range(width):
+        #             if abs(j - width // 2) < stride_width // 2 and abs(i - current_y) < stride_height // 2:
+        #                 image[height - 1 - i][width - 1 - j] = 255
 
+        if direction in [StrobeState.navForward, StrobeState.navBackward]:
+            center_x, center_y = width // 2, height // 2
+            radius = int(
+                min(width, height) * 0.4 * (progress if direction == StrobeState.navBackward else (1 - progress)))
             for i in range(height):
                 for j in range(width):
-                    if abs(j - width // 2) < stride_width // 2 and abs(i - current_y) < stride_height // 2:
+                    if (i - center_y) ** 2 + (j - center_x) ** 2 <= radius ** 2:
                         image[height - 1 - i][width - 1 - j] = 255
 
         elif direction in [StrobeState.navLeft, StrobeState.navRight]:
@@ -74,11 +83,6 @@ def displayNavigation(direction: StrobeState, duration=32):
                         image[height - 1 - i][width - 1 - j] = 255
 
         elif direction == StrobeState.navStop:
-            center_x, center_y = width // 2, height // 2
-            radius = int(min(width, height) * 0.4 * progress)
-            for i in range(height):
-                for j in range(width):
-                    if (i - center_y) ** 2 + (j - center_x) ** 2 <= radius ** 2:
-                        image[height - 1 - i][width - 1 - j] = 255
+            SequencePlayer(animation_paths['STROBE']).play()
 
         display(image)
